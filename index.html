@@ -79,25 +79,28 @@ body {
 </div>
 
 <script>
-const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTghsijuKuIgX8gWX8g83--uWGicmH-I-tU5WacyyCMiFGPYhPfC4xB51rA4-hcaPyv3ThMVr6Q4nUr/pub?gid=0&single=true&output=csv";
+const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTghsijuKuIgX8gWX8g83--uWGicmH-I-tU5WacyyCMiFGPYhPfC4xB51rA4-hcaPyv3ThMVr6Q4nUr/pubhtml";
 
 async function update() {
   try {
-    const response = await fetch(SHEET_URL, {
-      cache: "no-store"
-    });
-
+    const response = await fetch(SHEET_URL + "?v=" + Date.now());
     const text = await response.text();
 
-    const json = JSON.parse(text.substring(47).slice(0, -2));
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(text, "text/html");
 
-    const value = json.table.rows[0].c[0].v;
+    const value = doc.querySelector("td")?.innerText?.trim();
 
     const counter = document.getElementById("counter");
 
-    counter.innerText = value;
+    if (!value || isNaN(Number(value))) {
+      counter.innerText = "ERR";
+      return;
+    }
 
-    const diff = parseInt(value, 10);
+    const diff = Number(value);
+
+    counter.innerText = diff;
 
     if (diff >= 30) {
       counter.style.color = "var(--green)";
