@@ -78,7 +78,67 @@ body {
   </div>
 </div>
 
-https://richtaylor87.github.io/?v=667
+<script>
+const SHEET_ID = "1GUM_1Vyz5PZALAH8HgOQ8Fctln7FBI28dQuZ5vyxCSM";
+const SHEET_NAME = "Sheet1";
+const CELL = "A2";
+
+function handleSheetData(data) {
+  const counter = document.getElementById("counter");
+
+  try {
+    console.log(data);
+
+    const cell = data.table.rows[0].c[0];
+    const value = cell.f || cell.v;
+
+    const diff = Number(String(value).replace(/,/g, "").trim());
+
+    if (isNaN(diff)) {
+      counter.innerText = "BAD";
+      return;
+    }
+
+    counter.innerText = diff;
+
+    if (diff >= 30) {
+      counter.style.color = "var(--green)";
+    } else if (diff >= 10) {
+      counter.style.color = "var(--amber)";
+    } else {
+      counter.style.color = "var(--red)";
+    }
+
+  } catch (err) {
+    console.error(err);
+    counter.innerText = "NO DATA";
+  }
+}
+
+function update() {
+  const oldScript = document.getElementById("sheet-script");
+  if (oldScript) oldScript.remove();
+
+  const script = document.createElement("script");
+  script.id = "sheet-script";
+  script.src =
+    "https://docs.google.com/spreadsheets/d/" +
+    SHEET_ID +
+    "/gviz/tq?sheet=" +
+    encodeURIComponent(SHEET_NAME) +
+    "&range=" +
+    encodeURIComponent(CELL) +
+    "&headers=0" +
+    "&tqx=responseHandler:handleSheetData" +
+    "&cacheBust=" +
+    Date.now();
+
+  document.body.appendChild(script);
+}
+
+update();
+setInterval(update, 60000);
+</script>
 
 </body>
 </html>
