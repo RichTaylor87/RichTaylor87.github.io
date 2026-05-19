@@ -78,51 +78,7 @@ body {
   </div>
 </div>
 
-<script>
-const SHEET_ID = "1GUM_1Vyz5PZALAH8HgOQ8Fctln7FBI28dQuZ5vyxCSM";
-const CELL = "A2";
-
-async function update() {
-  try {
-    const url =
-      `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?` +
-      `tqx=out:json&range=${CELL}`;
-
-    const response = await fetch(url);
-    const text = await response.text();
-
-    const json = JSON.parse(
-      text.substring(47).slice(0, -2)
-    );
-
-    const value =
-      json.table.rows[0].c[0].v;
-
-    const counter =
-      document.getElementById("counter");
-
-    counter.innerText = value;
-
-    const diff = parseInt(value, 10);
-
-    if (diff >= 30) {
-      counter.style.color = "var(--green)";
-    } else if (diff >= 10) {
-      counter.style.color = "var(--amber)";
-    } else {
-      counter.style.color = "var(--red)";
-    }
-
-  } catch (err) {
-    console.error(err);
-    document.getElementById("counter").innerText = "ERR";
-  }
-}
-
-update();
-setInterval(update, 60000);
-</script>
-
+https://richtaylor87.github.io/?v=667
 
 </body>
 </html>
