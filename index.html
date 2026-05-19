@@ -90,7 +90,7 @@ function handleSheetData(data) {
     console.log(data);
 
     const cell = data.table.rows[0].c[0];
-    const value = cell.f || cell.v;
+    const value = cell.v;
 
     const diff = Number(String(value).replace(/,/g, "").trim());
 
