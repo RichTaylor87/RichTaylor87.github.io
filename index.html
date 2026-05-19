@@ -79,63 +79,46 @@ body {
 </div>
 
 <script>
-const SHEET_ID = "1GUM_1Vyz5PZALAH8HgOQ8Fctln7FBI28dQuZ5vyxCSM";
-const SHEET_NAME = "Sheet1";
-const CELL = "A1";
+const DEFAULT_DATE = "2026-04-08";
 
-function handleSheetData(data) {
-  const counter = document.getElementById("counter");
+function getClaimDate() {
+  return localStorage.getItem("claimDate") || DEFAULT_DATE;
+}
 
-  try {
-    const cell = data.table.rows[0].c[0];
+function setClaimDate() {
+  const current = getClaimDate();
+  const input = prompt("Enter last claim date as YYYY-MM-DD:", current);
 
-    // Google gives formatted date as cell.f, e.g. 08/04/2026
-    const dateText = cell.f || String(cell.v);
-
-    const parts = dateText.split("/");
-    const lastClaimDate = new Date(parts[2], parts[1] - 1, parts[0]);
-
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-    const diff = Math.floor((today - lastClaimDate) / (1000 * 60 * 60 * 24));
-
-    counter.innerText = diff;
-
-    if (diff >= 30) {
-      counter.style.color = "var(--green)";
-    } else if (diff >= 10) {
-      counter.style.color = "var(--amber)";
-    } else {
-      counter.style.color = "var(--red)";
-    }
-
-  } catch (err) {
-    console.error(err);
-    counter.innerText = "ERR";
+  if (input) {
+    localStorage.setItem("claimDate", input);
+    update();
   }
 }
 
 function update() {
-  const oldScript = document.getElementById("sheet-script");
-  if (oldScript) oldScript.remove();
+  const lastClaimDate = new Date(getClaimDate() + "T00:00:00");
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-  const script = document.createElement("script");
-  script.id = "sheet-script";
-  script.src =
-    "https://docs.google.com/spreadsheets/d/" +
-    SHEET_ID +
-    "/gviz/tq?sheet=" +
-    encodeURIComponent(SHEET_NAME) +
-    "&range=" +
-    encodeURIComponent(CELL) +
-    "&headers=0" +
-    "&tqx=responseHandler:handleSheetData" +
-    "&cacheBust=" +
-    Date.now();
+  const diff = Math.floor((today - lastClaimDate) / (1000 * 60 * 60 * 24));
 
-  document.body.appendChild(script);
+  const counter = document.getElementById("counter");
+  counter.innerText = diff;
+
+  if (diff >= 30) {
+    counter.style.color = "var(--green)";
+  } else if (diff >= 10) {
+    counter.style.color = "var(--amber)";
+  } else {
+    counter.style.color = "var(--red)";
+  }
 }
+
+document.addEventListener("keydown", function(e) {
+  if (e.key.toLowerCase() === "s") {
+    setClaimDate();
+  }
+});
 
 update();
 setInterval(update, 60000);
