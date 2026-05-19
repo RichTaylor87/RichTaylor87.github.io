@@ -80,18 +80,30 @@ body {
 
 <script>
 const SHEET_ID = "1GUM_1Vyz5PZALAH8HgOQ8Fctln7FBI28dQuZ5vyxCSM";
-const SHEET_NAME = "Sheet1";
 const CELL = "A2";
 
-function handleSheetData(data) {
+async function update() {
   try {
-    const cell = data.table.rows[0].c[0];
-    const value = cell.f || cell.v;
+    const url =
+      `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?` +
+      `tqx=out:json&range=${CELL}`;
 
-    const diff = Number(String(value).replace(/,/g, "").trim());
+    const response = await fetch(url);
+    const text = await response.text();
 
-    const counter = document.getElementById("counter");
-    counter.innerText = diff;
+    const json = JSON.parse(
+      text.substring(47).slice(0, -2)
+    );
+
+    const value =
+      json.table.rows[0].c[0].v;
+
+    const counter =
+      document.getElementById("counter");
+
+    counter.innerText = value;
+
+    const diff = parseInt(value, 10);
 
     if (diff >= 30) {
       counter.style.color = "var(--green)";
@@ -100,30 +112,11 @@ function handleSheetData(data) {
     } else {
       counter.style.color = "var(--red)";
     }
+
   } catch (err) {
     console.error(err);
     document.getElementById("counter").innerText = "ERR";
   }
-}
-
-function update() {
-  const oldScript = document.getElementById("sheet-script");
-  if (oldScript) oldScript.remove();
-
-  const script = document.createElement("script");
-  script.id = "sheet-script";
-  script.src =
-    "https://docs.google.com/spreadsheets/d/" +
-    SHEET_ID +
-    "/gviz/tq?sheet=" +
-    encodeURIComponent(SHEET_NAME) +
-   "&range=" +
-encodeURIComponent(CELL) +
-"&headers=0" +
-"&tqx=responseHandler:handleSheetData&cacheBust=" +
-Date.now();
-
-  document.body.appendChild(script);
 }
 
 update();
