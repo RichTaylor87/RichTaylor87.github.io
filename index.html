@@ -79,24 +79,21 @@ body {
 </div>
 
 <script>
-const SHEET_URL = "https://docs.google.com/spreadsheets/d/1GUM_1Vyz5PZALAH8HgOQ8Fctln7FBI28dQuZ5vyxCSM/gviz/tq?tqx=out:csv&sheet=Sheet1&range=A1";
+const SHEET_URL = "https://docs.google.com/spreadsheets/d/1GUM_1Vyz5PZALAH8HgOQ8Fctln7FBI28dQuZ5vyxCSM/gviz/tq?tqx=out:json&sheet=Sheet1&range=A1";
 
 async function update() {
   try {
-    const response = await fetch(SHEET_URL + "&cacheBust=" + Date.now(), {
+    const response = await fetch(SHEET_URL, {
       cache: "no-store"
     });
 
     const text = await response.text();
-    const value = text.replace(/"/g, "").trim();
+
+    const json = JSON.parse(text.substring(47).slice(0, -2));
+
+    const value = json.table.rows[0].c[0].v;
 
     const counter = document.getElementById("counter");
-
-    if (!/^\d+$/.test(value)) {
-      counter.innerText = "ERR";
-      console.error("Sheet did not return a number:", text);
-      return;
-    }
 
     counter.innerText = value;
 
@@ -111,7 +108,7 @@ async function update() {
     }
 
   } catch (err) {
-    console.error("Failed to fetch sheet data:", err);
+    console.error(err);
     document.getElementById("counter").innerText = "ERR";
   }
 }
@@ -119,6 +116,7 @@ async function update() {
 update();
 setInterval(update, 60000);
 </script>
+
 
 </body>
 </html>
