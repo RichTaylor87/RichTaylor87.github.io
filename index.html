@@ -81,23 +81,24 @@ body {
 <script>
 const SHEET_ID = "1GUM_1Vyz5PZALAH8HgOQ8Fctln7FBI28dQuZ5vyxCSM";
 const SHEET_NAME = "Sheet1";
-const CELL = "A2";
+const CELL = "A1";
 
 function handleSheetData(data) {
   const counter = document.getElementById("counter");
 
   try {
-    console.log(data);
-
     const cell = data.table.rows[0].c[0];
-    const value = cell.v;
 
-    const diff = Number(String(value).replace(/,/g, "").trim());
+    // Google gives formatted date as cell.f, e.g. 08/04/2026
+    const dateText = cell.f || String(cell.v);
 
-    if (isNaN(diff)) {
-      counter.innerText = "BAD";
-      return;
-    }
+    const parts = dateText.split("/");
+    const lastClaimDate = new Date(parts[2], parts[1] - 1, parts[0]);
+
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    const diff = Math.floor((today - lastClaimDate) / (1000 * 60 * 60 * 24));
 
     counter.innerText = diff;
 
@@ -111,7 +112,7 @@ function handleSheetData(data) {
 
   } catch (err) {
     console.error(err);
-    counter.innerText = "NO DATA";
+    counter.innerText = "ERR";
   }
 }
 
