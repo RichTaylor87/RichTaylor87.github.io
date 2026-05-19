@@ -117,10 +117,11 @@ function update() {
     SHEET_ID +
     "/gviz/tq?sheet=" +
     encodeURIComponent(SHEET_NAME) +
-    "&range=" +
-    encodeURIComponent(CELL) +
-    "&tqx=responseHandler:handleSheetData&cacheBust=" +
-    Date.now();
+   "&range=" +
+encodeURIComponent(CELL) +
+"&headers=0" +
+"&tqx=responseHandler:handleSheetData&cacheBust=" +
+Date.now();
 
   document.body.appendChild(script);
 }
