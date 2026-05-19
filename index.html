@@ -79,38 +79,53 @@ body {
 </div>
 
 <script>
-const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTghsijuKuIgX8gWX8g83--uWGicmH-I-tU5WacyyCMiFGPYhPfC4xB51rA4-hcaPyv3ThMVr6Q4nUr/pubhtml";
+const SHEET_ID = "1GUM_1Vyz5PZALAH8HgOQ8Fctln7FBI28dQuZ5vyxCSM";
+const SHEET_NAME = "Sheet1";
+const CELL = "A1";
 
-async function update() {
-    try {
-        const response = await fetch(SHEET_URL + "?v=" + Date.now());
-        const text = await response.text();
+function handleSheetData(data) {
+  try {
+    const value = data.table.rows[0].c[0].v;
+    const counter = document.getElementById("counter");
 
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(text, "text/html");
-
-        const cells = doc.querySelectorAll("td");
-
-        const value = cells[0].innerText.trim();
-
-        const counter = document.getElementById("counter");
-
-        counter.innerText = value;
-
-        const diff = parseInt(value);
-
-        if (diff >= 30) {
-            counter.style.color = "#4b8b2c";
-        } else if (diff >= 10) {
-            counter.style.color = "#e0b400";
-        } else {
-            counter.style.color = "#c0392b";
-        }
-
-    } catch (err) {
-        console.error(err);
-        document.getElementById("counter").innerText = "ERR";
+    if (value === null || value === undefined || isNaN(Number(value))) {
+      counter.innerText = "ERR";
+      return;
     }
+
+    const diff = Number(value);
+    counter.innerText = diff;
+
+    if (diff >= 30) {
+      counter.style.color = "var(--green)";
+    } else if (diff >= 10) {
+      counter.style.color = "var(--amber)";
+    } else {
+      counter.style.color = "var(--red)";
+    }
+  } catch (err) {
+    console.error(err);
+    document.getElementById("counter").innerText = "ERR";
+  }
+}
+
+function update() {
+  const oldScript = document.getElementById("sheet-script");
+  if (oldScript) oldScript.remove();
+
+  const script = document.createElement("script");
+  script.id = "sheet-script";
+  script.src =
+    "https://docs.google.com/spreadsheets/d/" +
+    SHEET_ID +
+    "/gviz/tq?sheet=" +
+    encodeURIComponent(SHEET_NAME) +
+    "&range=" +
+    encodeURIComponent(CELL) +
+    "&tqx=responseHandler:handleSheetData&cacheBust=" +
+    Date.now();
+
+  document.body.appendChild(script);
 }
 
 update();
