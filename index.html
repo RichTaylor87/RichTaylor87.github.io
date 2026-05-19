@@ -82,38 +82,35 @@ body {
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTghsijuKuIgX8gWX8g83--uWGicmH-I-tU5WacyyCMiFGPYhPfC4xB51rA4-hcaPyv3ThMVr6Q4nUr/pubhtml";
 
 async function update() {
-  try {
-    const response = await fetch(SHEET_URL + "?v=" + Date.now());
-    const text = await response.text();
+    try {
+        const response = await fetch(SHEET_URL + "?v=" + Date.now());
+        const text = await response.text();
 
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(text, "text/html");
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(text, "text/html");
 
-    const value = doc.querySelector("td")?.innerText?.trim();
+        const cells = doc.querySelectorAll("td");
 
-    const counter = document.getElementById("counter");
+        const value = cells[0].innerText.trim();
 
-    if (!value || isNaN(Number(value))) {
-      counter.innerText = "ERR";
-      return;
+        const counter = document.getElementById("counter");
+
+        counter.innerText = value;
+
+        const diff = parseInt(value);
+
+        if (diff >= 30) {
+            counter.style.color = "#4b8b2c";
+        } else if (diff >= 10) {
+            counter.style.color = "#e0b400";
+        } else {
+            counter.style.color = "#c0392b";
+        }
+
+    } catch (err) {
+        console.error(err);
+        document.getElementById("counter").innerText = "ERR";
     }
-
-    const diff = Number(value);
-
-    counter.innerText = diff;
-
-    if (diff >= 30) {
-      counter.style.color = "var(--green)";
-    } else if (diff >= 10) {
-      counter.style.color = "var(--amber)";
-    } else {
-      counter.style.color = "var(--red)";
-    }
-
-  } catch (err) {
-    console.error(err);
-    document.getElementById("counter").innerText = "ERR";
-  }
 }
 
 update();
