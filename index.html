@@ -81,19 +81,22 @@ body {
 <script>
 const SHEET_ID = "1GUM_1Vyz5PZALAH8HgOQ8Fctln7FBI28dQuZ5vyxCSM";
 const SHEET_NAME = "Sheet1";
-const CELL = "A2";
+const CELL = "A1";
 
 function handleSheetData(data) {
   try {
-   const value = data.table.rows[0].c[0].f || data.table.rows[0].c[0].v;
+    const cell = data.table.rows[0].c[0];
+    const dateText = cell.f || cell.v;
+
+    const parts = dateText.split("/");
+    const lastClaimDate = new Date(parts[2], parts[1] - 1, parts[0]);
+
+    const today = new Date();
+    const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+    const diff = Math.floor((todayOnly - lastClaimDate) / (1000 * 60 * 60 * 24));
+
     const counter = document.getElementById("counter");
-
-    if (value === null || value === undefined || isNaN(Number(value))) {
-      counter.innerText = "ERR";
-      return;
-    }
-
-    const diff = Number(value);
     counter.innerText = diff;
 
     if (diff >= 30) {
