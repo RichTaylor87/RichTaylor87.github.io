@@ -91,49 +91,159 @@ body {
 </div>
 
 <script>
-const DEFAULT_DATE = "2026-04-08";
+(() => {
+  const counter =
+    document.getElementById("counter") ||
+    document.querySelector(".counter");
 
-function getClaimDate() {
-  return localStorage.getItem("claimDate") || DEFAULT_DATE;
-}
+  const parameters = new URLSearchParams(window.location.search);
+  const sourceUrl = parameters.get("source");
 
-function setClaimDate() {
-  const current = getClaimDate();
-  const input = prompt("Enter last claim date as YYYY-MM-DD:", current);
+  const refreshSeconds = Math.max(
+    10,
+    Number(parameters.get("refresh")) || 60
+  );
 
-  if (input) {
-    localStorage.setItem("claimDate", input);
-    update();
+  function parseClaimDate(value) {
+    value = value.trim().replace(/^"|"$/g, "");
+
+    // UK date: DD/MM/YYYY
+    let match = value.match(
+      /^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/
+    );
+
+    if (match) {
+      return new Date(
+        Number(match[3]),
+        Number(match[2]) - 1,
+        Number(match[1])
+      );
+    }
+
+    // ISO date: YYYY-MM-DD
+    match = value.match(
+      /^(\d{4})-(\d{1,2})-(\d{1,2})$/
+    );
+
+    if (match) {
+      return new Date(
+        Number(match[1]),
+        Number(match[2]) - 1,
+        Number(match[3])
+      );
+    }
+
+    return null;
   }
-}
 
-function update() {
-  const lastClaimDate = new Date(getClaimDate() + "T00:00:00");
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  function calculateDaysSince(claimDate) {
+    const today = new Date();
 
-  const diff = Math.floor((today - lastClaimDate) / (1000 * 60 * 60 * 24));
+    const todayUTC = Date.UTC(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate()
+    );
 
-  const counter = document.getElementById("counter");
-  counter.innerText = diff;
+    const claimUTC = Date.UTC(
+      claimDate.getFullYear(),
+      claimDate.getMonth(),
+      claimDate.getDate()
+    );
 
-  if (diff >= 30) {
-    counter.style.color = "var(--green)";
-  } else if (diff >= 10) {
-    counter.style.color = "var(--amber)";
-  } else {
-    counter.style.color = "var(--red)";
+    return Math.max(
+      0,
+      Math.floor((todayUTC - claimUTC) / 86400000)
+    );
   }
-}
 
-document.addEventListener("keydown", function(e) {
-  if (e.key.toLowerCase() === "s") {
-    setClaimDate();
+  function displayNumber(number) {
+    counter.textContent = number;
+
+    // Change these limits if required.
+    if (number < 30) {
+      counter.style.color = "var(--red, #c0392b)";
+    } else if (number < 60) {
+      counter.style.color = "var(--amber, #d99b00)";
+    } else {
+      counter.style.color = "var(--green, #3f7f2f)";
+    }
   }
-});
 
-update();
-setInterval(update, 60000);
+  async function updateCounter() {
+    if (!counter) {
+      console.error("Counter element could not be found.");
+      return;
+    }
+
+    if (!sourceUrl) {
+      counter.textContent = "—";
+      console.error("No spreadsheet source was provided.");
+      return;
+    }
+
+    try {
+      // Prevent the browser or OptiSigns from showing a cached value.
+      const separator = sourceUrl.includes("?") ? "&" : "?";
+      const requestUrl =
+        sourceUrl + separator + "cache=" + Date.now();
+
+      const response = await fetch(requestUrl, {
+        cache: "no-store"
+      });
+
+      if (!response.ok) {
+        throw new Error(
+          `Spreadsheet returned ${response.status}`
+        );
+      }
+
+      const csv = await response.text();
+
+      const cells = csv
+        .split(/\r?\n|,/)
+        .map(cell => cell.trim().replace(/^"|"$/g, ""))
+        .filter(Boolean);
+
+      let valueToDisplay = null;
+
+      // First look for a date and calculate the days since it.
+      for (const cell of cells) {
+        const claimDate = parseClaimDate(cell);
+
+        if (claimDate) {
+          valueToDisplay = calculateDaysSince(claimDate);
+          break;
+        }
+      }
+
+      // Alternatively, display a number supplied by the sheet.
+      if (valueToDisplay === null) {
+        const numberCell = cells.find(cell =>
+          /^\d+(\.\d+)?$/.test(cell)
+        );
+
+        if (numberCell !== undefined) {
+          valueToDisplay = Math.round(Number(numberCell));
+        }
+      }
+
+      if (valueToDisplay === null) {
+        throw new Error(
+          "No valid date or number was found in the spreadsheet."
+        );
+      }
+
+      displayNumber(valueToDisplay);
+    } catch (error) {
+      console.error("Could not update the counter:", error);
+      counter.textContent = "—";
+    }
+  }
+
+  updateCounter();
+  setInterval(updateCounter, refreshSeconds * 1000);
+})();
 </script>
 
 </body>
